@@ -28,7 +28,7 @@ CREATE TABLE Professionnels (
     email_professionnel VARCHAR(100)NOT NULL,
     tel_professionnel VARCHAR(100)NOT NULL,
     linkedin VARCHAR(100)NOT NULL,
-    specialite VARCHAR(255),
+    specialite VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -52,7 +52,7 @@ CREATE TABLE Utilisateurs (
 -- Structure de la table 'Criteres'
 CREATE TABLE Criteres (
     id_critere INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    nom_critere VARCHAR(255) UNIQUE NOT NULL,
+    nom_critere VARCHAR(100) UNIQUE NOT NULL,
     description_critere TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -92,7 +92,7 @@ CREATE TABLE Entretiens (
     id_eleve INT UNSIGNED NOT NULL,
     id_professionnel INT UNSIGNED NOT NULL,
     date_entretien DATETIME NOT NULL,
-    lieu_entretien VARCHAR(255),
+    lieu_entretien VARCHAR(100),
     notes_entretien TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
