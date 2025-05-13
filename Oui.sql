@@ -25,6 +25,9 @@ CREATE TABLE Professionnels (
     id_professionnel INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nom_professionnel VARCHAR(100) NOT NULL,
     prenom_professionnel VARCHAR(100) NOT NULL,
+    email_professionnel VARCHAR(100)NOT NULL,
+    tel_professionnel VARCHAR(100)NOT NULL,
+    linkedin VARCHAR(100)NOT NULL,
     specialite VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -37,7 +40,7 @@ CREATE TABLE Utilisateurs (
     id_utilisateur INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     id_eleve INT UNSIGNED NULL,
     identifiant VARCHAR(100) UNIQUE NOT NULL,
-    mot_de_passe VARCHAR(255) NOT NULL,
+    mot_de_passe VARCHAR(100) NOT NULL,
     role_utilisateur ENUM('admin', 'professeur', 'eleve') NOT NULL DEFAULT 'eleve',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -60,7 +63,7 @@ CREATE TABLE Criteres (
 -- Structure de la table 'Grilles'
 CREATE TABLE Grilles (
     id_grille INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    nom_grille VARCHAR(255) UNIQUE NOT NULL,
+    nom_grille VARCHAR(100) UNIQUE NOT NULL,
     description_grille TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -103,8 +106,8 @@ CREATE TABLE Entretiens (
 CREATE TABLE Documents (
     id_document INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     id_eleve INT UNSIGNED NOT NULL,
-    nom_document VARCHAR(255) NOT NULL,
-    nom_fichier VARCHAR(255) NOT NULL,
+    nom_document VARCHAR(100) NOT NULL,
+    nom_fichier VARCHAR(100) NOT NULL,
     date_upload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
