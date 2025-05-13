@@ -1,0 +1,51 @@
+Procédure de Mise à Jour (3 étapes)
+Modifiez votre fichier oui.py normalement
+
+Travaillez comme d'habitude dans votre éditeur (Spyder, VS Code, etc.)
+
+Ajoutez vos nouvelles fonctionnalités/corrections
+
+Quand vous êtes prêt à générer le nouvel .exe :
+
+powershell
+cd "C:\Users\estho\Desktop\Nouveau dossier"
+pyinstaller --clean oui.spec
+Testez le nouvel exécutable :
+
+powershell
+.\dist\oui.exe
+Bonnes Pratiques pour les Mises à Jour
+Versionnage simple :
+
+python
+# En-tête de oui.py
+__version__ = "1.1"  # Incrémentez à chaque mise à jour
+Optimisation des temps de compilation :
+
+Utilisez --clean seulement si nécessaire (changez de dépendances)
+
+Sans --clean, les builds sont 2x plus rapides
+
+Vérification rapide :
+
+powershell
+pyinstaller --noconfirm oui.spec  # Ignore les prompts de confirmation
+Cas Particuliers
+Si vous ajoutez :
+
+Nouvelles images : Mettez à jour datas dans oui.spec
+
+Nouveaux imports : Ajoutez aux hiddenimports
+
+Fichiers externes : Placez-les dans .\dist\ avec l'exécutable
+
+Exemple de modification de oui.spec pour nouveaux fichiers :
+
+python
+datas=[
+    ('logo.png', '.'),
+    ('config.ini', '.'),  # Nouveau fichier
+    ('assets/*.png', 'assets/')  # Dossier d'images
+],
+Cette méthode vous permet d'itérer rapidement sans tout reconfigurer à chaque fois ! 🚀
+
