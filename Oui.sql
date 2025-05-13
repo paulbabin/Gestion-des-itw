@@ -27,8 +27,10 @@ CREATE TABLE Professionnels (
     prenom_professionnel VARCHAR(100) NOT NULL,
     email_professionnel VARCHAR(100)NOT NULL,
     tel_professionnel VARCHAR(100)NOT NULL,
+    entreprise VARCHAR(100)NOT NULL,
     linkedin VARCHAR(100)NOT NULL,
-    specialite VARCHAR(100),
+    intitule_metier VARCHAR(100)NOT NULL,
+    secteur VARCHAR(100)NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
