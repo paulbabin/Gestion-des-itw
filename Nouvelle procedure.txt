@@ -1,0 +1,673 @@
+Ignorer et passer au contenu
+Vous avez dit :
+jia comiple un fichier python en .exe il marche sur mon pc mais en le testant su run autre pc voici l'erreur que j'ai Traceback (most recent call last):
+  File "oui.py", line 56, in connect_db
+  File "mysql\connector\pooling.py", line 323, in connect
+    return MySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "mysql\connector\connection.py", line 188, in __init__
+    client_license = "GPL-2.0"
+        ^^^^^^^^^^^^
+  File "mysql\connector\connection.py", line 459, in close
+    infile_path = os.path.abspath(self._allow_local_infile_in_path)
+    ^^^^^^^^^^^^^^^
+  File "mysql\connector\connection.py", line 1107, in cmd_quit
+    rows = await cnx.get_rows()
+  File "mysql\connector\network.py", line 650, in send
+    ) -> ssl.SSLContext:
+        ^^^^^^^^^^^^^^^^
+  File "mysql\connector\network.py", line 223, in send
+    raise InterfaceError(errno=2013)
+  File "mysql\connector\network.py", line 169, in _send_pkt
+    self._pktnr: int = -1  # packet number
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "mysql\connector\errors.py", line 60, in __init__
+    self.msg = get_client_error(self.errno)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "mysql\connector\locales\__init__.py", line 62, in get_client_error
+ImportError: No localization support for language 'eng'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "oui.py", line 1053, in <module>
+  File "oui.py", line 51, in __init__
+  File "oui.py", line 70, in connect_db
+AttributeError: module 'mysql.connector' has no attribute 'connector'. Did you mean: 'connect'?
+ChatGPT a dit :
+L'erreur que tu rencontres vient probablement d’un problème d’empaquetage des dépendances, en particulier avec le module mysql.connector, lorsque tu as compilé ton script Python en .exe avec un outil comme PyInstaller.
+
+⚠️ Problèmes identifiés
+ImportError: No localization support for language 'eng'
+
+Cela indique que les fichiers de localisation de mysql-connector-python ne sont pas inclus dans l’exécutable.
+
+Ces fichiers sont nécessaires pour les messages d’erreur ou autres aspects régionaux.
+
+AttributeError: module 'mysql.connector' has no attribute 'connector'. Did you mean: 'connect'?
+
+Cette erreur est souvent causée par une mauvaise structure du module à l'exécution (par exemple, une partie du module mal incluse, ou un nom de fichier qui crée un conflit).
+
+✅ Solutions
+1. Évite de nommer ton fichier mysql.py ou connector.py
+Cela peut provoquer un conflit de noms. Assure-toi que ton script principal ne porte pas un nom de fichier identique à un module importé.
+
+2. Ajoute manuellement les fichiers de localisation
+Lorsque tu utilises PyInstaller, les fichiers de localisation de mysql-connector-python ne sont pas toujours détectés automatiquement. Pour les inclure :
+
+Utilise une commande PyInstaller comme celle-ci :
+
+pyinstaller --add-data "<chemin_vers_site-packages>/mysql/connector/locales;mysql/connector/locales" oui.py
+Exemple (sous Windows, avec un environnement virtuel) :
+
+pyinstaller --onefile --add-data "venv\Lib\site-packages\mysql\connector\locales;mysql\connector\locales" oui.py
+⚠️ Attention : Sous Linux/macOS, remplace ; par : dans la commande --add-data.
+
+3. Vérifie la version de mysql-connector-python
+Certaines versions de ce paquet ont des bugs d'inclusion avec PyInstaller. La version 8.0.28 ou plus récente fonctionne mieux.
+
+4. Utilise un .spec personnalisé si besoin
+Si tu veux plus de contrôle, tu peux générer un fichier .spec avec :
+
+pyi-makespec oui.py
+Puis modifie ce fichier pour inclure les fichiers manquants, comme ceci dans Analysis :
+
+a = Analysis(
+    ...,
+    datas=[('venv/Lib/site-packages/mysql/connector/locales', 'mysql/connector/locales')],
+    ...
+)
+Ensuite compile avec :
+
+pyinstaller oui.spec
+💡 Astuce pour déboguer
+Ajoute une impression temporaire dans ton code pour vérifier que l'import se fait correctement :
+
+import mysql.connector
+print(dir(mysql.connector))  # Vérifie les attributs disponibles
+Résumé
+✅ Assure-toi que ton script n’a pas un nom de fichier qui entre en conflit avec un module.
+
+✅ Inclue les fichiers de localisation manuellement avec --add-data.
+
+✅ Vérifie que la version de mysql-connector-python est compatible avec PyInstaller.
+
+✅ Utilise un .spec file si besoin pour une compilation plus fine.
+
+Si tu veux, je peux t’aider à écrire la commande exacte ou le .spec en fonction de ton système et ton arborescence.
+
+Vous avez dit :
+voici mon fichier spec qui a servi pour faire le .exe # -*- mode: python ; coding: utf-8 -*-
+
+block_cipher = None
+
+a = Analysis(
+    ['oui.py'],
+    pathex=['C:\\Users\\estho\\Desktop\\Nouveau dossier'],
+    binaries=[],  # Supprimez la ligne des DLLs problématiques
+    datas=[
+        (r'C:\Users\estho\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\mysql\connector\*', 'mysql/connector'),
+        (r'C:\Users\estho\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\mysql\connector\locales\*', 'mysql/connector/locales')
+    ],
+    hiddenimports=[
+        'mysql.connector.connection',
+        'mysql.connector.connection_cext',
+        'mysql.connector.locales',
+        'mysql.connector.pooling',
+        'mysql.connector.django',
+        'mysql.connector.version'
+    ],
+    hookspath=['.'],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name='oui',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    onefile=True,
+    icon='logo.ico'
+)
+ChatGPT a dit :
+Merci pour ton fichier .spec ! Il est bien avancé, mais il y a un point critique à corriger qui empêche PyInstaller d’inclure correctement les fichiers, notamment ceux de locales :
+
+❌ Problème identifié
+La ligne :
+
+(r'C:\...\site-packages\mysql\connector\*', 'mysql/connector')
+n'inclut pas récursivement les sous-dossiers et les fichiers — le * ne fonctionne pas de cette façon dans datas.
+
+✅ Solution : utiliser glob.glob pour tout inclure proprement
+Tu peux modifier ton .spec comme ceci :
+
+1. En haut, importe glob et os :
+import os
+import glob
+2. Remplace ton bloc datas=[...] par :
+datas = []
+
+# Inclure tous les fichiers du dossier mysql/connector
+connector_path = r'C:\Users\estho\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\mysql\connector'
+for file in glob.glob(os.path.join(connector_path, '**', '*.*'), recursive=True):
+    target_path = os.path.relpath(file, connector_path)
+    datas.append((file, os.path.join('mysql/connector', target_path)))
+Cela va inclure tous les fichiers, y compris les fichiers de localisation, dans les bons sous-dossiers.
+
+3. Assure-toi d’utiliser cette variable dans Analysis :
+a = Analysis(
+    ['oui.py'],
+    pathex=['C:\\Users\\estho\\Desktop\\Nouveau dossier'],
+    binaries=[],
+    datas=datas,
+    hiddenimports=[
+        'mysql.connector.connection',
+        'mysql.connector.connection_cext',
+        'mysql.connector.locales',
+        'mysql.connector.pooling',
+        'mysql.connector.django',
+        'mysql.connector.version'
+    ],
+    ...
+)
+🧪 Étape suivante
+Après ces modifications, relance la compilation :
+
+pyinstaller oui.spec
+Et teste le .exe sur un autre PC. Cela devrait corriger l'erreur No localization support for language 'eng' et éviter les soucis d'import de mysql.connector.
+
+Souhaite-tu que je t’envoie une version complète corrigée du fichier .spec prêt à coller ?
+
+Vous avez dit :
+oui envoie le .spec
+ChatGPT a dit :
+Voici la version corrigée complète de ton fichier .spec, prête à être utilisée avec PyInstaller. Elle inclut tous les fichiers du dossier mysql/connector, y compris les fichiers de localisation (locales), en utilisant glob pour un ajout récursif :
+
+✅ Fichier oui.spec (corrigé)
+# -*- mode: python ; coding: utf-8 -*-
+
+import os
+import glob
+
+block_cipher = None
+
+# 📦 Chemin vers le dossier mysql.connector installé par pip
+connector_path = r'C:\Users\estho\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\mysql\connector'
+
+# 📂 On collecte tous les fichiers dans ce dossier (y compris dans les sous-dossiers comme locales/)
+datas = []
+for file in glob.glob(os.path.join(connector_path, '**', '*.*'), recursive=True):
+    target_path = os.path.relpath(file, connector_path)
+    datas.append((file, os.path.join('mysql/connector', target_path)))
+
+a = Analysis(
+    ['oui.py'],
+    pathex=['C:\\Users\\estho\\Desktop\\Nouveau dossier'],
+    binaries=[],
+    datas=datas,
+    hiddenimports=[
+        'mysql.connector.connection',
+        'mysql.connector.connection_cext',
+        'mysql.connector.locales',
+        'mysql.connector.pooling',
+        'mysql.connector.django',
+        'mysql.connector.version'
+    ],
+    hookspath=['.'],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name='oui',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,  # Mets à True pour voir les erreurs si besoin
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    onefile=True,
+    icon='logo.ico'
+)
+✅ Étapes suivantes
+Sauvegarde ce fichier en tant que oui.spec (même dossier que oui.py).
+
+Exécute :
+
+pyinstaller oui.spec
+Récupère le .exe généré dans le dossier dist\.
+
+Dis-moi si tu veux que la console soit visible pour faciliter le débogage (console=True) ou si tu veux aussi ajouter un dossier config, assets, etc. à inclure dans le .exe.
+
+Vous avez dit :
+j'ai changé de pc je ne suis donc pas sur de ce chemin 
+ChatGPT a dit :
+Parfait, on va corriger ça simplement.
+
+🔍 Étapes pour retrouver le bon chemin du module mysql.connector
+Ouvre un terminal (CMD ou PowerShell).
+
+Lance une session Python avec :
+
+Vous avez dit :
+connector_path = r'C:\Users\estho\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\mysql\connector'
+ChatGPT a dit :
+Parfait, tu as retrouvé le chemin sur ton nouveau PC ! Voici donc la version mise à jour de ton fichier .spec avec ce chemin exact :
+
+✅ Fichier oui.spec (avec le bon chemin)
+# -*- mode: python ; coding: utf-8 -*-
+
+import os
+import glob
+
+block_cipher = None
+
+# 📦 Chemin vers mysql.connector (à jour selon ton nouveau PC)
+connector_path = r'C:\Users\estho\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\mysql\connector'
+
+# 📂 Ajout récursif de tous les fichiers du dossier mysql/connector
+datas = []
+for file in glob.glob(os.path.join(connector_path, '**', '*.*'), recursive=True):
+    target_path = os.path.relpath(file, connector_path)
+    datas.append((file, os.path.join('mysql
+Vous avez dit :
+non justement ce n'est pas le bon chemin 
+ChatGPT a dit :
+Merci pour la précision ! Suivons ces étapes simples pour retrouver le bon chemin vers mysql.connector sur ton nouveau PC :
+
+✅ Étapes à faire :
+Ouvre une invite de commande ou un terminal.
+
+Lance une session Python :
+
+python
+Dans l’interpréteur Python, tape ce code :
+
+import mysql.connector
+print(mysql.connector.__file__)
+📌 Tu obtiendras un chemin comme :
+C:\Users\TON_NOM\AppData\Local\Programs\Python\Python312\Lib\site-packages\mysql\connector\__init__.py
+Ce chemin te donne directement le dossier d'installation de mysql.connector. Il te suffira de copier tout le chemin jusqu'à mysql\connector (sans le __init__.py à la fin).
+
+Une fois que tu l’as, dis-le-moi et je te remets à jour le fichier .spec avec ce chemin exact.
+
+Vous avez dit :
+>>> import mysql.connector
+Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+ModuleNotFoundError: No module named 'mysql'
+>>> import mysql.connector
+Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+ModuleNotFoundError: No module named 'mysql'
+ChatGPT a dit :
+Parfait, l’erreur est claire : le module mysql-connector-python n’est pas installé sur ton nouveau PC.
+
+✅ Solution : installer mysql-connector-python
+Ouvre ton terminal (CMD ou PowerShell), puis exécute :
+
+pip install mysql-connector-python
+🔄 Ensuite
+Une fois installé, relance Python dans le terminal :
+
+python
+Puis tape :
+
+import mysql.connector
+print(mysql.connector.__file__)
+Cela t’affichera le bon chemin vers mysql/connector, que tu pourras copier pour mettre à jour le fichier .spec.
+
+Dès que tu l’as, colle-le ici et je te prépare le fichier .spec corrigé 👍
+
+Vous avez dit :
+donc sur chaque pc ou je veux lancer mon logiciel il faudra faire ca ? 
+ChatGPT a dit :
+❌ Non, justement : le but de créer un .exe avec PyInstaller est d'éviter d’installer Python ou des paquets (pip install ...) sur les autres PC.
+
+👉 Mais : pour que ça fonctionne vraiment partout, il faut que ton .exe contienne tout, y compris tous les fichiers de mysql.connector (notamment les fichiers de localisation locales qui manquaient dans ton erreur d’origine).
+
+✅ Résumé clair
+Tu veux que ton .exe fonctionne sur tous les PC ?	Tu dois…
+Ne pas installer pip, ni Python, ni mysql	✅ Inclure correctement tous les fichiers de mysql.connector dans le .spec
+Éviter les erreurs de langue (No localization support for language 'eng')	✅ Ajouter le dossier locales de mysql.connector dans le bundle
+Ne pas avoir à faire d’installation manuelle sur chaque PC	✅ Compiler avec --onefile et un bon .spec
+🧩 Pourquoi ça t’a affiché une erreur avant ?
+Ton ancien .spec incluait des chemins d’un autre PC, donc certains fichiers essentiels n’ont pas été embarqués dans le .exe. Résultat : le programme marche chez toi, mais pas ailleurs.
+
+🎯 Ce qu’on fait maintenant
+Tu installes mysql-connector-python sur ton PC de développement (juste une fois) :
+
+pip install mysql-connector-python
+Tu me redonnes le chemin exact du dossier mysql/connector, obtenu avec :
+
+import mysql.connector
+print(mysql.connector.__file__)
+Je te génère un .spec propre qui inclut tout, zéro installation à faire sur les autres PC après ça.
+
+Souhaite-tu qu'on installe maintenant et qu'on continue ensemble ?
+
+Vous avez dit :
+j'ai fais le pip install mais ni le imoprt ni le print ne mache 
+ChatGPT a dit :
+Merci pour le retour, c’est étrange mais on va régler ça pas à pas.
+
+🔍 Étapes de vérification
+Vérifie que l’installation s’est bien faite
+
+Tape dans ton terminal :
+
+pip show mysql-connector-python
+Tu dois voir une sortie comme :
+
+Name: mysql-connector-python
+Version: 8.x.x
+Location: C:\Users\TON_UTILISATEUR\AppData\Local\Programs\Python\PythonXXX\Lib\site-packages
+➤ Note bien le chemin "Location".
+
+Si rien ne s'affiche
+Alors fais :
+
+pip install --user mysql-connector-python
+Ou essaie explicitement avec le bon Python :
+
+py -m pip install mysql-connector-python
+Vérifie que tu utilises le bon Python
+
+Dans le terminal, tape :
+
+where python
+Puis :
+
+python --version
+Tu pourrais avoir plusieurs versions installées (par ex. Python 3.10 et 3.12), et tu installes peut-être sur l’une mais tu exécutes l’autre.
+
+🛠️ Contournement rapide si rien ne marche
+Même sans faire l'import, on peut retrouver le dossier avec cette commande :
+
+pip show mysql-connector-python
+Puis va manuellement dans l’explorateur Windows, dans le dossier .../site-packages/mysql/connector et copie ce chemin. Dis-le-moi ici et je te prépare un .spec propre.
+
+Tu veux qu’on vérifie ensemble ce que t’affiche pip show mysql-connector-python ?
+
+Vous avez dit :
+PS C:\Users\pesthor.PEDA> pip show mysql-connector-python
+Name: mysql-connector-python
+Version: 9.3.0
+Summary: A self-contained Python driver for communicating with MySQL servers, using an API that is compliant with the Python Database API Specification v2.0 (PEP 249).
+Home-page:
+Author: Oracle and/or its affiliates
+Author-email:
+License: GNU GPLv2 (with FOSS License Exception)
+Location: C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages
+Requires:
+Required-by:
+PS C:\Users\pesthor.PEDA>
+ChatGPT a dit :
+Parfait ! ✅ Tu as bien mysql-connector-python installé, et on a le chemin exact :
+
+C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages
+✅ Chemin important pour le .spec
+Tu vas inclure :
+
+mysql/connector/* (les fichiers du connecteur)
+
+mysql/connector/locales/* (les fichiers de langues, pour éviter l’erreur "No localization support for language 'eng'")
+
+📝 Nouveau fichier .spec
+Voici le .spec à utiliser avec PyInstaller :
+
+# -*- mode: python ; coding: utf-8 -*-
+
+block_cipher = None
+
+a = Analysis(
+    ['oui.py'],
+    pathex=['C:\\Users\\pesthor.PEDA\\Desktop\\TON_DOSSIER_CONTENANT_oui.py'],  # <- Mets ici ton vrai chemin
+    binaries=[],
+    datas=[
+        (
+            r'C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\mysql\connector\*',
+            'mysql/connector'
+        ),
+        (
+            r'C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\mysql\connector\locales\*',
+            'mysql/connector/locales'
+        ),
+    ],
+    hiddenimports=[
+        'mysql.connector.connection',
+        'mysql.connector.connection_cext',
+        'mysql.connector.locales',
+        'mysql.connector.pooling',
+        'mysql.connector.version'
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name='oui',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,  # Change à True si tu veux une console visible
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    onefile=True,
+    icon='logo.ico'
+)
+🚀 Ensuite
+Place ce fichier .spec dans le même dossier que oui.py
+
+Compile avec PyInstaller :
+
+pyinstaller oui.spec
+Ton .exe généré dans le dossier dist/ fonctionnera sur n’importe quel PC, sans installation.
+
+Tu veux que je te génère un .spec tout prêt à copier-coller, avec le bon chemin et nom de dossier ? Donne-moi juste le dossier où est oui.py.
+
+Vous avez dit :
+pyinstaller : Le terme «pyinstaller» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script ou
+programme exécutable. Vérifiez l'orthographe du nom, ou si un chemin d'accès existe, vérifiez que le chemin d'accès
+est correct et réessayez.
+Au caractère Ligne:1 : 1
++ pyinstaller oui.spec
++ ~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (pyinstaller:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ChatGPT a dit :
+L'erreur que tu rencontres indique que PyInstaller n'est pas installé ou n'est pas accessible via la ligne de commande.
+
+🔧 Solution 1 : Installer PyInstaller
+Ouvre ton terminal (PowerShell ou CMD) et tape :
+
+pip install pyinstaller
+Vérifie l’installation en tapant :
+
+pyinstaller --version
+Si tout va bien, tu devrais voir la version de PyInstaller s'afficher.
+
+🔧 Solution 2 : Si pyinstaller n’est toujours pas reconnu
+Si après avoir installé PyInstaller, tu rencontres encore le problème, il peut s'agir d'un problème de chemin d’accès. Assure-toi que le répertoire Scripts de ton installation Python est bien dans la variable d’environnement PATH.
+
+Trouve le chemin de Scripts avec cette commande :
+
+where python
+Tu devrais voir un chemin du type :
+
+C:\Users\TON_UTILISATEUR\AppData\Local\Programs\Python\Python311
+Ajoute le répertoire Scripts à ton PATH :
+
+Exemple : C:\Users\TON_UTILISATEUR\AppData\Local\Programs\Python\Python311\Scripts
+
+🎯 Résumé
+Installe PyInstaller si nécessaire avec pip install pyinstaller.
+
+Si pyinstaller n'est toujours pas reconnu, vérifie que Scripts est bien dans ton PATH.
+
+Fais-moi savoir si ça marche ou si tu rencontres un autre problème !
+
+Vous avez dit :
+Installing collected packages: altgraph, pywin32-ctypes, pyinstaller-hooks-contrib, pefile, pyinstaller
+  WARNING: The scripts pyi-archive_viewer.exe, pyi-bindepend.exe, pyi-grab_version.exe, pyi-makespec.exe, pyi-set_version.exe and pyinstaller.exe are installed in 'C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\Scripts' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+Successfully installed altgraph-0.17.4 pefile-2023.2.7 pyinstaller-6.13.0 pyinstaller-hooks-contrib-2025.4 pywin32-ctypes-0.2.3
+
+[notice] A new release of pip is available: 24.0 -> 25.1.1
+[notice] To update, run: C:\Users\pesthor.PEDA\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\python.exe -m pip install --upgrade pip
+PS C:\Users\pesthor.PEDA\Desktop\oui> pyinstaller oui.spec
+pyinstaller : Le terme «pyinstaller» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script ou
+programme exécutable. Vérifiez l'orthographe du nom, ou si un chemin d'accès existe, vérifiez que le chemin d'accès
+est correct et réessayez.
+Au caractère Ligne:1 : 1
++ pyinstaller oui.spec
++ ~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (pyinstaller:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\pesthor.PEDA\Desktop\oui> C:\Users\pesthor.PEDA\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\python.exe -m pip install --upgrade pip
+Requirement already satisfied: pip in c:\program files\windowsapps\pythonsoftwarefoundation.python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\lib\site-packages (24.0)
+Collecting pip
+  Downloading pip-25.1.1-py3-none-any.whl.metadata (3.6 kB)
+Downloading pip-25.1.1-py3-none-any.whl (1.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 9.7 MB/s eta 0:00:00
+Installing collected packages: pip
+  WARNING: The scripts pip.exe, pip3.11.exe and pip3.exe are installed in 'C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\Scripts' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+Successfully installed pip-25.1.1
+PS C:\Users\pesthor.PEDA\Desktop\oui>
+ChatGPT a dit :
+L'erreur que tu rencontres indique que les scripts Python, y compris pyinstaller, sont installés dans un répertoire qui n'est pas encore dans la variable d'environnement PATH. C'est pour cela que Windows ne trouve pas la commande pyinstaller.
+
+Solution : Ajouter le répertoire Scripts à ton PATH
+Localiser le répertoire de Scripts :
+Il est installé ici selon le message :
+
+C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\Scripts
+Ajouter ce chemin au PATH :
+
+Ouvre le menu Démarrer, puis cherche "variables d’environnement" et sélectionne Modifier les variables d’environnement pour votre compte.
+
+Dans la fenêtre qui s'ouvre, clique sur Variables d'environnement en bas.
+
+Dans la section Variables utilisateur, sélectionne Path et clique sur Modifier.
+
+Clique sur Nouveau et ajoute ce chemin :
+
+C:\Users\pesthor.PEDA\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\Scripts
+Clique sur OK pour valider.
+
+Redémarre PowerShell ou CMD : Ferme la fenêtre et ouvre-en une nouvelle pour que les modifications prennent effet.
+
+Vérification :
+Ensuite, vérifie si pyinstaller est accessible avec la commande :
+
+pyinstaller --version
+Si tout va bien, tu devrais voir la version de pyinstaller et pouvoir exécuter la commande pyinstaller oui.spec sans problème.
+
+Essaie cela et dis-moi si ça fonctionne !
+
+Vous avez dit :
+donne le rracourci clavier poiur aller a ces parametres 
+ChatGPT a dit :
+Le raccourci clavier pour accéder directement aux Paramètres des variables d’environnement sous Windows est le suivant :
+
+Appuie sur Win + X (ou clique droit sur le menu Démarrer).
+
+Sélectionne Système.
+
+Dans le menu de gauche, clique sur Informations système (tout en bas).
+
+Ensuite, clique sur Paramètres système avancés (à droite).
+
+Une fois la fenêtre Propriétés système ouverte, clique sur Variables d'environnement... en bas.
+
+Cela te permettra d’accéder à la fenêtre où tu peux modifier le Path.
+
+Vous avez dit :
+non celui pour ouvrir variable d'enviroenment 
+ChatGPT a dit :
+Le raccourci clavier pour ouvrir directement les Variables d’environnement sous Windows est le suivant :
+
+Win + R pour ouvrir la fenêtre Exécuter.
+
+Tape sysdm.cpl et appuie sur Entrée.
+
+Dans la fenêtre Propriétés système, clique sur l'onglet Paramètres système avancés.
+
+Clique ensuite sur le bouton Variables d'environnement... en bas.
+
+Cela t’amènera directement aux paramètres des variables d’environnement où tu pourras modifier le Path.
+
+
+
+
+
+
+
+
+
+
+
+
+Aucun fichier choisiAucun fichier choisi
+ChatGPT peut commettre des erreurs. Il est recommandé de vérifier les informations importantes. Voir les préférences en matière de cookies.
